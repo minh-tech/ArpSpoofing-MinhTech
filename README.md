@@ -1,5 +1,5 @@
 # ArpSpoofing-Script
-Type these command line to start:
+Type these command lines to start:
 
 chmod a+x arpspf.py
 
