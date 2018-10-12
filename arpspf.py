@@ -3,6 +3,7 @@
 import subprocess
 import shlex
 from pathlib import Path
+from time import sleep
 
 NETDCR_TXT = 'netdiscover.txt'
 IPADDR_TXT = 'ipaddress.txt'
@@ -82,6 +83,7 @@ while True:
         run_command2('ifconfig ' + interface + ' up')
         run_command2('service network-manager restart')
         currmac = result[2].split(" ")[8]
+        sleep(1)
 
     elif step == 2: # 2. Scan my network
         run_command2('gnome-terminal -- /bin/bash -c \'netdiscover -r {} | tee {}\''.format(rangeIP, NETDCR_TXT))
