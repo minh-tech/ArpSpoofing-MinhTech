@@ -1,7 +1,6 @@
 #! /usr/bin/python3
 
-import subprocess
-import shlex
+import subprocess, shlex
 from pathlib import Path
 from time import sleep
 
@@ -78,7 +77,7 @@ def choose_step():
 iproute = runcmdgetoutput('ip route')
 gateway = iproute[0].split(" ")[2]
 interface = iproute[0].split(" ")[4]
-rangeIP = iproute[1].split(" ")[0]
+# rangeIP = iproute[1].split(" ")[0]
 yourIP = iproute[1].split(" ")[8]
 macchanger = runcmdgetoutput('macchanger -s ' + interface)
 currmac = macchanger[0].split(" ")[4]
@@ -101,7 +100,7 @@ while True:
         sleep(1)
 
     elif step == 2: # 2. Scan my network
-        runcmd('gnome-terminal -- /bin/bash -c \'netdiscover -r {} | tee {}\''.format(rangeIP, NETDCR_TXT))
+        runcmd('gnome-terminal -- /bin/bash -c \'netdiscover -f | tee {}\''.format(NETDCR_TXT))
 
     elif step == 3: # 3. Arp Spoof ip address
         
@@ -118,7 +117,7 @@ while True:
                 line = line.strip()
                 if gateway != line:
                     print(i, 'Ip:', line)
-                    i = i+1;
+                    i = i+1
                     iplst.append(line)
 
         print('Please select IP address(es) (Ex: 1; 1,4; 1-3; or 1-3,4) ([0] to quit): ')
