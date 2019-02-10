@@ -1,4 +1,9 @@
 # ArpSpoofing-Script
+DISCLAIMER
+
+This program is for research/learning purpose only. The author takes no responsibility for any one that chooses to use the source files. By using this program, you accept that you are agreeing to use the program at your own risk.
+
+
 Type these command lines to start:
 
 --------------------------
